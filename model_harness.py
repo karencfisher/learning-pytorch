@@ -66,7 +66,7 @@ class ModelHarness:
             elapsed = time.time() - start
             time_str = utils.time_str(elapsed)
             gg.done(f'{time_str} - Loss: {loss_hist[epoch]:.4f} - Accuracy: {accuracy_hist[epoch] * 100:.2f}%')
-        return {'loss': loss_hist.cpu(), 'accuracy': accuracy_hist.cpu()}
+        return {'loss': loss_hist, 'accuracy': accuracy_hist}
     
     def evaluate(self, data):
         '''
@@ -82,8 +82,13 @@ class ModelHarness:
         gg.begin()
         start = time.time()
         for count, batch in enumerate(data):
-            # forward pass through model
+            
+            # prepare data for device (gpu or cpu)
             x_batch, y_batch = batch
+            x_batch.to(self.device)
+            y_batch.to(self.device)
+
+            # forward pass through model
             preds_batch = self.model(x_batch).detach()
 
             # accumulate preds
