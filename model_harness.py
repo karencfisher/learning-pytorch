@@ -54,7 +54,7 @@ class ModelHarness:
                     accurate_preds = ((pred >= 0.5) == y_batch).float()
                 else:
                     accurate_preds = (torch.argmax(pred, dim=1) == y_batch).float()
-                accuracy_hist[epoch] += accurate_preds.mean()
+                accuracy_hist[epoch] += accurate_preds.mean().cpu()
 
                 # update gas guage
                 gg.update(count + 1)
@@ -102,11 +102,11 @@ class ModelHarness:
                 labels_batch = ((preds_batch >= 0.5) == y_batch)
             else:
                 labels_batch = torch.argmax(preds_batch, dim=1)
-            labels.append(labels_batch)
+            labels.append(labels_batch.cpu())
 
             # And accurate labels
             accurate_batch = (labels_batch == y_batch).float()
-            accurates.append(accurate_batch)
+            accurates.append(accurate_batch.cpu())
 
             # update guage
             gg.update(count + 1)
