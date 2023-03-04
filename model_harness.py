@@ -5,17 +5,16 @@ import utils
 
 class ModelHarness:
     def __init__(self, model, loss_fn, optimizer, learning_rate=0.001):
-        self.model = model
-        self.loss_fn = loss_fn
-        self.optimizer = optimizer(model.parameters(), lr=learning_rate)
-        self.learning_rate = learning_rate
-
         if torch.cuda.is_available():
             self.device = torch.device('cuda')
         else:
             self.device = torch.device('cpu')
         print(f'Device = {self.device}')
-        model.to(self.device) 
+
+        self.model = model.to(self.device)
+        self.loss_fn = loss_fn
+        self.optimizer = optimizer(model.parameters(), lr=learning_rate)
+        self.learning_rate = learning_rate
 
     def train(self, data, num_epochs):
         '''
@@ -37,8 +36,8 @@ class ModelHarness:
             for count, batch in enumerate(data):
                 # load batches to device (gpu or cpu)
                 x_batch, y_batch = batch
-                x_batch.to(self.device)
-                y_batch.to(self.device)
+                x_batch = x_batch.to(self.device)
+                y_batch = y_batch.to(self.device)
 
                 # run forward pass
                 self.optimizer.zero_grad()
@@ -88,8 +87,8 @@ class ModelHarness:
             
             # prepare data for device (gpu or cpu)
             x_batch, y_batch = batch
-            x_batch.to(self.device)
-            y_batch.to(self.device)
+            x_batch = x_batch.to(self.device)
+            y_batch = y_batch.to(self.device)
 
             # forward pass through model
             with torch.no_grad():
@@ -129,6 +128,7 @@ class ModelHarness:
         if labels provided, also display and return accuracy
         '''
         self.model = self.model.eval()
+        x = x.to(self.device)
         with torch.no_grad():
             preds = self.model(x)
         if preds.shape[1] == 1:
