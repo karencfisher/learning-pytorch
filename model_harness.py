@@ -14,6 +14,7 @@ class ModelHarness:
             self.device = torch.device('cuda')
         else:
             self.device = torch.device('cpu')
+        print(f'Device = {self.device}')
         model.to(self.device) 
 
     def train(self, data, num_epochs):
@@ -29,6 +30,7 @@ class ModelHarness:
         accuracy_hist = [0] * num_epochs
         gg = utils.GasGuage(len(data))
         for epoch in range(num_epochs):
+            self.model = self.model.train()
             print(f'Epoch {epoch + 1}')
             gg.begin()
             start = time.time()
@@ -81,6 +83,7 @@ class ModelHarness:
         gg = utils.GasGuage(len(data))
         gg.begin()
         start = time.time()
+        self.model = self.model.eval()
         for count, batch in enumerate(data):
             
             # prepare data for device (gpu or cpu)
@@ -89,10 +92,11 @@ class ModelHarness:
             y_batch.to(self.device)
 
             # forward pass through model
-            preds_batch = self.model(x_batch).detach()
+            with torch.no_grad():
+                preds_batch = self.model(x_batch)
 
             # accumulate preds
-            preds.append(preds_batch)
+            preds.append(preds_batch.cpu())
 
             # get and accumulate labels
             if preds_batch.shape[1] == 1:
@@ -124,9 +128,11 @@ class ModelHarness:
         Inference on single batch (or example)
         if labels provided, also display and return accuracy
         '''
-        preds = self.model(x).detach()
+        self.model = self.model.eval()
+        with torch.no_grad():
+            preds = self.model(x)
         if preds.shape[1] == 1:
             labels = (preds >= 0.5)
         else:
             labels = torch.argmax(preds, dim=1)
-        return preds, labels
+        return preds.cpu(), labels
